@@ -1,0 +1,89 @@
+import java.util.Arrays;
+import java.util.Scanner;
+
+class Process {
+    int id;         // Process ID
+    int arrivalTime; // Arrival Time
+    int burstTime;   // Burst Time
+    int completionTime;
+    int turnAroundTime;
+    int waitingTime;
+
+    Process(int id, int arrivalTime, int burstTime) {
+        this.id = id;
+        this.arrivalTime = arrivalTime;
+        this.burstTime = burstTime;
+    }
+}
+
+public class SJFS {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter the number of processes: ");
+        int n = sc.nextInt();
+
+        Process[] processes = new Process[n];
+
+        // Input process details
+        for (int i = 0; i < n; i++) {
+            System.out.print("Enter arrival time and burst time for process " + (i + 1) + ": ");
+            int arrivalTime = sc.nextInt();
+            int burstTime = sc.nextInt();
+            processes[i] = new Process(i + 1, arrivalTime, burstTime);
+        }
+
+        // Sort by arrival time, and then burst time (if arrival times are equal)
+        Arrays.sort(processes, (p1, p2) -> {
+            if (p1.arrivalTime == p2.arrivalTime)
+                return Integer.compare(p1.burstTime, p2.burstTime);
+            return Integer.compare(p1.arrivalTime, p2.arrivalTime);
+        });
+
+        int currentTime = 0;
+        boolean[] completed = new boolean[n];
+        int completedProcesses = 0;
+
+        while (completedProcesses < n) {
+            int shortestJobIndex = -1;
+            int shortestBurstTime = Integer.MAX_VALUE;
+
+            for (int i = 0; i < n; i++) {
+                if (!completed[i] && processes[i].arrivalTime <= currentTime && processes[i].burstTime < shortestBurstTime) {
+                    shortestBurstTime = processes[i].burstTime;
+                    shortestJobIndex = i;
+                }
+            }
+
+            if (shortestJobIndex == -1) {
+                // If no process is ready, advance the time
+                currentTime++;
+            } else {
+                Process p = processes[shortestJobIndex];
+                p.completionTime = currentTime + p.burstTime;
+                p.turnAroundTime = p.completionTime - p.arrivalTime;
+                p.waitingTime = p.turnAroundTime - p.burstTime;
+
+                currentTime += p.burstTime;
+                completed[shortestJobIndex] = true;
+                completedProcesses++;
+            }
+        }
+
+        // Display results
+        System.out.println("\nProcess\tArrival\tBurst\tCompletion\tTurnaround\tWaiting");
+        double totalTAT = 0, totalWT = 0;
+        for (Process p : processes) {
+            totalTAT += p.turnAroundTime;
+            totalWT += p.waitingTime;
+            System.out.printf("%d\t%d\t%d\t%d\t\t%d\t\t%d\n",
+                    p.id, p.arrivalTime, p.burstTime, p.completionTime, p.turnAroundTime, p.waitingTime);
+        }
+
+        // Calculate and display average Turnaround Time and Waiting Time
+        System.out.printf("\nAverage Turnaround Time: %.2f\n", totalTAT / n);
+        System.out.printf("Average Waiting Time: %.2f\n", totalWT / n);
+
+        sc.close();
+    }
+}
